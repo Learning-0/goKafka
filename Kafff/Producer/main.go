@@ -19,7 +19,7 @@ func Producer(ctx context.Context) {
 		AllowAutoTopicCreation: true, //实际生产环境应当为false,topic的创建需要专门的运维成员负责
 	}
 	defer writer.Close()
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 3; i++ { //重试三次
 		if err := writer.WriteMessages( //写入是原子操作
 			ctx,
 			kafka.Message{Key: []byte("1"), Value: []byte("你好")},
@@ -28,7 +28,7 @@ func Producer(ctx context.Context) {
 			kafka.Message{Key: []byte("2"), Value: []byte("哈")},
 			kafka.Message{Key: []byte("1"), Value: []byte("3月7")},
 		); err != nil {
-			if err == kafka.LeaderNotAvailable {
+			if err == kafka.LeaderNotAvailable { //第一次写入，因为没有创建topic所以一定会失败，需要进行重试
 				time.Sleep(5 * time.Second)
 				continue
 			} else {
